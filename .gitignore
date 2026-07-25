@@ -28,6 +28,8 @@ override.tf.json
 terraform.rc
 .github/templates/
 lambda/*.zip
+backend/bootstrap
+backend/api
 .worktrees/
 .worktree-ports.txt
 .vscode/

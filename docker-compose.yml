@@ -1,0 +1,40 @@
+services:
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "18080:8080"
+    volumes:
+      - ./backend:/app
+    environment:
+      DB_DSN: "root:devpassword@tcp(db:3306)/honamovie?parseTime=true"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: mysql:8
+    ports:
+      - "13306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: devpassword
+      MYSQL_DATABASE: honamovie
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - db-data:/var/lib/mysql
+
+  web:
+    image: node:22
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+    profiles:
+      - frontend
+
+volumes:
+  db-data:

@@ -1,6 +1,7 @@
 ---
 name: investigate
 description: ユーザーから依頼された内容を調査する。コードベース・ログ・公式ドキュメント等の調査をサブエージェントに委任し、結果をまとめて報告する。
+user-invocable: true
 allowed-tools: Read, Write, Glob, Grep, Bash
 ---
 

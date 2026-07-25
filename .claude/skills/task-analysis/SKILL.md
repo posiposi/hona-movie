@@ -1,6 +1,7 @@
 ---
 name: task-analysis
 description: タスク分解・調査フェーズで使用する分析スキル。Issue仕様の構造化、コードベース調査の手法、タスク粒度の判断基準を定義する。Issue分析・コード調査・タスク設計時に使用する。
+user-invocable: false
 allowed-tools: Read, Glob, Grep, TaskCreate, TaskUpdate, TaskGet, TaskList
 ---
 

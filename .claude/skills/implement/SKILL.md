@@ -1,7 +1,8 @@
 ---
-name: implement-task
-description: GitHub IssueからPR作成までの開発ワークフローを実行する。Issue番号を引数として受け取る。
+name: implement
+description: GitHub IssueからPR作成までの開発ワークフローを実行する。Issue番号を引数として受け取り、仕様取得→調査→タスク分解→TDD実装→レビュー→コミット→PR作成を一気通貫で行う。「Issue #N を実装して」「#N をやって」のように指示された場合に使用する。
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Skill, Agent, WebFetch, TaskCreate, TaskUpdate, TaskList, TaskGet
+user-invocable: true
 ---
 
 # 概要
@@ -9,9 +10,25 @@ allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Skill, Agent, WebFetch, Task
 引数で受け取ったGitHub Issue番号（以下 `<Issue番号>`）の仕様に基づき、以下のフェーズを順番に実行する。
 各フェーズ間の情報連携はClaude CodeのTasks機能を使用する。
 
+## Phase 0: ブランチ作成
+
+1. 現在のブランチが `main` であることを確認し、最新の状態に更新する
+   ```bash
+   git checkout main && git pull origin main
+   ```
+2. Issue番号に基づいた作業ブランチを作成・切り替える
+   ```bash
+   git checkout -b feature/<Issue番号>-<Issueタイトルの要約(kebab-case)>
+   ```
+
+> **重要**: `main` ブランチでは直接作業しない。すべての変更は作業ブランチ上で行うこと。
+
 ## Phase 1: 仕様取得
 
-1. GitHub MCPサーバー（`mcp__github__issue_read`）を使用してIssue #`<Issue番号>` の内容を取得する
+1. `gh` CLIを使用してIssue #`<Issue番号>` の内容を取得する
+   ```bash
+   gh issue view <Issue番号> --json title,body,labels,comments
+   ```
 2. Issueのタイトル、本文、ラベル、コメントを収集する
 3. TaskCreateで「仕様取得」タスクを作成する
    - subject: `Issue #<Issue番号> の仕様取得`
@@ -63,3 +80,4 @@ allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Skill, Agent, WebFetch, Task
 - 各フェーズの結果はTasks機能のmetadataで連携する
 - 実装はすべてDockerコンテナ内で行う
 - テスト・lint・ビルドの実行はDockerコンテナ内で行う
+- GitHub操作には `gh` CLIを使用する（MCP サーバーは使用しない）

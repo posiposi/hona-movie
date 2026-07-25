@@ -38,7 +38,7 @@ infra/      # Terraform
 **すべての開発コマンド(build/test/lint/migrate)はコンテナ内で実行する。ホストに Go/MySQL/Node を直接入れない。** `docker compose` で `api`(Go)/`db`(mysql:8)/`web`(Node) を定義。コマンドは `docker compose run --rm api ...` の形に統一。
 
 - **Go は最新 stable**。`go.mod` の `go` ディレクティブと Docker イメージタグを一致させる。
-- **alpine イメージは使わない**。build は `golang:<latest>-bookworm`、runtime は `provided.al2023` もしくは Debian系 distroless。web は `node:<lts>-bookworm`。
+- **alpine イメージは使わない**。build は `golang:<latest-stable>`、runtime は `provided.al2023` もしくは Debian系 distroless。web は `node:<lts>`。
 - **Lambda 成果物**: 開発コンテナ内で `GOOS=linux GOARCH=arm64` でビルド（`provided.al2023` 想定）。
 - ローカル動作確認は `docker compose up`(db/api/web) → スキーマ適用 → 検索(TMDBプロキシ)→視聴登録→比率→感想→一覧の導線を通す。
 

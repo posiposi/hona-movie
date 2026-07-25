@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 )
 
 // newMux creates the HTTP multiplexer with all routes registered.
@@ -45,8 +46,16 @@ func startLambda() {
 // startHTTPServer starts a local net/http server on port 8080.
 func startHTTPServer() {
 	addr := ":8080"
+	srv := &http.Server{
+		Addr:              addr,
+		Handler:           newMux(),
+		ReadHeaderTimeout: 10 * time.Second,
+		ReadTimeout:       30 * time.Second,
+		WriteTimeout:      30 * time.Second,
+		IdleTimeout:       120 * time.Second,
+	}
 	log.Printf("Starting HTTP server on %s\n", addr)
-	if err := http.ListenAndServe(addr, newMux()); err != nil {
+	if err := srv.ListenAndServe(); err != nil {
 		log.Fatalf("Server failed: %v", err)
 	}
 }

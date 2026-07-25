@@ -35,13 +35,13 @@ infra/      # Terraform
 
 ## 開発環境・コマンド
 
-**すべての開発コマンド(build/test/lint/migrate)はコンテナ内で実行する。ホストに Go/MySQL/Node を直接入れない。** `docker compose` で `api`(Go)/`db`(mysql:8.4.x LTS)/`web`(Node) を定義。コマンドは `docker compose run --rm api ...` の形に統一。
+**すべての開発コマンド(build/test/lint/migrate)はコンテナ内で実行する。ホストに Go/MySQL/Node を直接入れない。** `docker compose` で `api`(Go)/`db`(mysql:8.4.x LTS) を定義（フロントエンドの `web`(Node) は別 Issue で追加予定）。コマンドは `docker compose run --rm api ...` の形に統一。
 
 - **Go は最新 stable**。`go.mod` の `go` ディレクティブと Docker イメージタグを一致させる。
 - **MySQL は LTS 系（8.4.x）を使う**。9.x は Innovation トラック（サポート期間が短い）なので採用しない。イメージタグはパッチまで固定する（浮動タグ `mysql:8.4` は最新パッチに追随しないため）。
 - **alpine イメージは使わない**。build は `golang:<latest-stable>`、runtime は `provided.al2023` もしくは Debian系 distroless。web は `node:<lts>`。
 - **Lambda 成果物**: 開発コンテナ内で `GOOS=linux GOARCH=arm64` でビルド（`provided.al2023` 想定）。
-- ローカル動作確認は `docker compose up`(db/api/web) → スキーマ適用 → 検索(TMDBプロキシ)→視聴登録→比率→感想→一覧の導線を通す。
+- ローカル動作確認は `docker compose up`(db/api) → スキーマ適用 → 検索(TMDBプロキシ)→視聴登録→比率→感想→一覧の導線を通す。
 - **コンテナは常時起動させておく。作業後に `docker compose down` / `stop` で停止しないこと。** 起動済みのコンテナに対して `docker compose run --rm api ...` / `docker compose exec api ...` でコマンドを実行する。
 
 ## インフラ / IaC

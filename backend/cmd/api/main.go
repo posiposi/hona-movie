@@ -8,7 +8,6 @@ import (
 	"time"
 )
 
-// newMux creates the HTTP multiplexer with all routes registered.
 func newMux() *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/health", handleHealth)
@@ -29,21 +28,16 @@ func main() {
 	}
 }
 
-// isLambda returns true when running inside an AWS Lambda execution environment.
 func isLambda() bool {
 	_, ok := os.LookupEnv("AWS_LAMBDA_FUNCTION_NAME")
 	return ok
 }
 
-// startLambda boots the Lambda runtime handler.
-// TODO: Integrate aws-lambda-go and wire the mux through lambda-adapter or
-//
-//	a custom handler that converts events to http.Request.
+// TODO: aws-lambda-go を組み込み、Lambda イベントを http.Request に変換して mux に流す。
 func startLambda() {
 	log.Println("Starting in Lambda mode (not yet implemented)")
 }
 
-// startHTTPServer starts a local net/http server on port 8080.
 func startHTTPServer() {
 	addr := ":8080"
 	srv := &http.Server{

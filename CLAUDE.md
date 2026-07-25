@@ -51,6 +51,14 @@ Terraform で全リソース管理。コスト圧縮方針が明確なので逸�
 - **RDS Proxy は不要**: 単一ユーザーで同時実行ほぼ1。Lambda `reserved_concurrency` を小さく(例5)、`SetMaxOpenConns(2)`・短い `ConnMaxIdleTime` で対応。
 - S3 アクセスは Gateway VPC Endpoint 経由（NAT を通さない）。シークレット(TMDB_TOKEN/DB_DSN/AUTH_TOKEN)は SSM Parameter Store SecureString。
 
+## コーディング方針
+
+- **コメントに頼らず、コード自体から振る舞いを読み取れるように記述する**。自明な処理を説明するだけのコメントは書かない。コメントを残すのは *why*（設計判断の理由）や TODO など、コードからは読み取れない情報に限る。
+
+## エージェント運用ルール
+
+- **PR作成完了後はすべてのサブエージェント・agent teamsを `TaskStop` で終了すること**。`SendMessage` での終了指示では停止しないため、必ず `TaskStop` を使用する。不要なエージェントを起動したまま残さない。
+
 ## 遵守事項
 
 - **TMDBアトリビューション必須**: フロントのフッター等に「This product uses the TMDB API but is not endorsed or certified by TMDB.」＋TMDBロゴを掲示。TMDB は非商用・自己利用の範囲に留める。

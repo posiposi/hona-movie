@@ -28,13 +28,6 @@ services:
     volumes:
       - db-data:/var/lib/mysql
 
-  web:
-    image: node:22
-    working_dir: /app
-    volumes:
-      - ./frontend:/app
-    profiles:
-      - frontend
 
 volumes:
   db-data:

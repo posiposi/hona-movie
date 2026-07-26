@@ -9,13 +9,17 @@ services:
       - ./backend:/app
       - go-mod-cache:/go/pkg/mod
     environment:
-      DB_DSN: "${MYSQL_USER}:${MYSQL_PASSWORD}@tcp(db:3306)/${MYSQL_DATABASE}?parseTime=true"
+      DB_DSN: "${MYSQL_USER}:${MYSQL_PASSWORD}@tcp(db:3306)/${MYSQL_DATABASE}?parseTime=true&loc=UTC"
+      TEST_DB_DSN: "${MYSQL_USER}:${MYSQL_PASSWORD}@tcp(db:3306)/${MYSQL_DATABASE}_test?parseTime=true&loc=UTC"
     depends_on:
       db:
         condition: service_healthy
 
   db:
     image: mysql:8.4.10
+    # DATETIME は TZ 変換されないため、CURRENT_TIMESTAMP 既定値も UTC で入るよう
+    # サーバの time_zone を固定する（「DB には常に UTC を入れる」運用規約の担保）。
+    command: --default-time-zone=+00:00
     ports:
       - "127.0.0.1:13306:3306"
     environment:
@@ -30,6 +34,7 @@ services:
       retries: 10
     volumes:
       - db-data:/var/lib/mysql
+      - ./docker/mysql/initdb.d:/docker-entrypoint-initdb.d:ro
 
 volumes:
   db-data:

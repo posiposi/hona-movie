@@ -3,13 +3,13 @@ package main
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"log"
 	"os"
 	"os/signal"
 	"path/filepath"
 
+	"github.com/posiposi/hona-movie/backend/internal/config"
 	"github.com/posiposi/hona-movie/backend/migrations"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -54,12 +54,12 @@ func run(ctx context.Context, command string) error {
 		return fmt.Errorf("unknown command: %s", command)
 	}
 
-	dsn := os.Getenv("DB_DSN")
-	if dsn == "" {
-		return errors.New("DB_DSN is not set")
+	cfg, err := config.LoadDB()
+	if err != nil {
+		return err
 	}
 
-	db, err := sql.Open("mysql", dsn)
+	db, err := sql.Open("mysql", cfg.DSN)
 	if err != nil {
 		return fmt.Errorf("open database: %w", err)
 	}

@@ -44,6 +44,24 @@ infra/      # Terraform
 - ローカル動作確認は `docker compose up`(db/api) → スキーマ適用 → 検索(TMDBプロキシ)→視聴登録→比率→感想→一覧の導線を通す。
 - **コンテナは常時起動させておく。作業後に `docker compose down` / `stop` で停止しないこと。** 起動済みのコンテナに対して `docker compose run --rm api ...` / `docker compose exec api ...` でコマンドを実行する。
 
+## DB マイグレーション
+
+**pressly/goose** を versioned migration で使う。goose CLI は導入せず、`backend/cmd/migrate` が `embed.FS` 経由で SQL を読む。ローカルと本番で同一実装を通し、本番へはバイナリ単体を持ち込めば足りるようにするため。
+
+```bash
+docker compose run --rm api go run ./cmd/migrate status   # 適用状況
+docker compose run --rm api go run ./cmd/migrate up       # 未適用をすべて適用
+docker compose run --rm api go run ./cmd/migrate down     # 1バージョンだけロールバック
+```
+
+- DSN は `docker-compose.yml` が `api` に渡す `DB_DSN` から読む。引数での指定はしない。
+- **新規マイグレーションは手で作成する**（goose CLI を入れていないため）。`backend/migrations/<UTCタイムスタンプ>_<説明>.sql` に `-- +goose Up` / `-- +goose Down` の両方を書く。タイムスタンプは `date -u +%Y%m%d%H%M%S` で採る。
+- **`//go:embed *.sql` は対象ファイルが0件だとビルドエラーになる。** `backend/migrations/` を空にしないこと。
+- 物理DBは単一なので、モジュラーモノリスの境界に関わらず `backend/migrations/` に一元管理する。
+- **主キーは ULID(`CHAR(26)`)** とし、ID カラムのみ `CHARACTER SET ascii COLLATE ascii_bin` を指定する。テーブル既定の `utf8mb4` では `CHAR(26)` が 104 bytes を占め、クラスタリングインデックスと全 FK が肥大化するため。
+- **日時カラムは `DATETIME`**（`TIMESTAMP` は上限が 2038-01-19）。TZ 変換されないため、**DB には常に UTC を入れる**運用規約とセットで守る。
+- 本番(VPC内RDS)への適用経路は別 Issue で設計する。Lambda ハンドラ内でのマイグレーション実行はしない（コールドスタート増加・同時実行時の競合・実行時間のリスク）。
+
 ## インフラ / IaC
 
 Terraform で全リソース管理。コスト圧縮方針が明確なので逸脱しないこと:

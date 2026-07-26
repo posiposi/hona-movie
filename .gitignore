@@ -30,6 +30,7 @@ terraform.rc
 lambda/*.zip
 backend/bootstrap
 backend/api
+backend/migrate
 .worktrees/
 .worktree-ports.txt
 .vscode/

@@ -7,6 +7,7 @@ services:
       - "127.0.0.1:18080:8080"
     volumes:
       - ./backend:/app
+      - go-mod-cache:/go/pkg/mod
     environment:
       DB_DSN: "${MYSQL_USER}:${MYSQL_PASSWORD}@tcp(db:3306)/${MYSQL_DATABASE}?parseTime=true"
     depends_on:
@@ -32,3 +33,4 @@ services:
 
 volumes:
   db-data:
+  go-mod-cache:

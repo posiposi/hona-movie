@@ -18,7 +18,6 @@ const (
 	defaultConnMaxIdleTime = time.Minute
 )
 
-// DB は DB 接続とコネクションプールの設定を保持する。
 type DB struct {
 	DSN             string
 	MaxOpenConns    int
@@ -27,13 +26,12 @@ type DB struct {
 	ConnMaxIdleTime time.Duration
 }
 
-// LoadDB は DB_DSN と DB_* のプール設定を環境変数から読み込む。
 func LoadDB() (DB, error) {
 	return loadDB("DB_DSN")
 }
 
-// LoadTestDB は統合テスト用に TEST_DB_DSN から設定を読み込む。開発用スキーマを
-// 壊さないよう、テストは常にこちらの接続先を使う。
+// LoadTestDB の接続先を DB_DSN と分けているのは、テストのクリーンアップ漏れが
+// 開発データを壊さないようにするため。
 func LoadTestDB() (DB, error) {
 	return loadDB("TEST_DB_DSN")
 }

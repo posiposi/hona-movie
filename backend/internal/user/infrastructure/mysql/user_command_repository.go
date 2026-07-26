@@ -11,18 +11,16 @@ import (
 	"gorm.io/gorm/clause"
 )
 
-// UserCommandRepository は users テーブルへの書き込みを担う。
 type UserCommandRepository struct {
 	db *gorm.DB
 }
 
-// NewUserCommandRepository はユーザーの書き込みリポジトリを生成する。
 func NewUserCommandRepository(db *gorm.DB) repository.UserCommandRepository {
 	return &UserCommandRepository{db: db}
 }
 
-// Save は新規作成と更新の双方を UPSERT で扱う。created_at / updated_at は
-// GORM に採番させるため、ドメインの値は永続化に持ち込まない。
+// Save が created_at / updated_at をドメインから持ち込まないのは、GORM に
+// 採番させるため。新規作成と更新は UPSERT で一本化している。
 func (r *UserCommandRepository) Save(ctx context.Context, user model.User) error {
 	row := UserModel{
 		ID:   user.ID().Value(),

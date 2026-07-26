@@ -55,9 +55,8 @@ func runTests(m *testing.M) (int, error) {
 	return m.Run(), nil
 }
 
-// migrateTestSchema はテスト用スキーマに未適用のマイグレーションを適用する。
-// 接続先が `_test` サフィックスを持つことを確認してから実行し、開発用スキーマを
-// テストが破壊しないようにする。
+// migrateTestSchema が接続先の `_test` サフィックスを確認してから適用するのは、
+// 誤って開発用スキーマを対象にした場合にテストが破壊してしまうため。
 func migrateTestSchema(cfg config.DB) error {
 	sqlDB, err := sql.Open("mysql", cfg.DSN)
 	if err != nil {

@@ -10,8 +10,8 @@ type User struct {
 	updatedAt time.Time
 }
 
-// CreateUser は新規ユーザーを生成する。createdAt / updatedAt は永続化時に DB の
-// 既定値で決まるため、ここではゼロ値のままにする。
+// CreateUser が createdAt / updatedAt をゼロ値のままにするのは、値が永続化時に
+// 決まるため。
 func CreateUser(name UserName) User {
 	return User{
 		id:   NewUserID(),
@@ -19,8 +19,7 @@ func CreateUser(name UserName) User {
 	}
 }
 
-// ReconstructUser は永続化済みの値から User を復元する。DB からの復元専用で
-// あり、ID の採番もバリデーションも行わない。
+// ReconstructUser は DB からの復元専用で、ID の採番もバリデーションも行わない。
 func ReconstructUser(id UserID, name UserName, createdAt, updatedAt time.Time) User {
 	return User{
 		id:        id,
@@ -46,7 +45,7 @@ func (u User) UpdatedAt() time.Time {
 	return u.updatedAt
 }
 
-// Rename は名前を差し替えた新しい User を返す。レシーバは変更しない。
+// Rename はレシーバを変更せず、名前を差し替えた新しい User を返す。
 func (u User) Rename(name UserName) User {
 	u.name = name
 	return u

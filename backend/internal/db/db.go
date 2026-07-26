@@ -15,7 +15,6 @@ import (
 
 const pingTimeout = 5 * time.Second
 
-// Open は設定から GORM 接続を生成し、疎通確認を行う。
 func Open(ctx context.Context, cfg config.DB) (*gorm.DB, error) {
 	gormDB, err := gorm.Open(gormmysql.Open(cfg.DSN), &gorm.Config{
 		// DATETIME は TZ 変換されないため、GORM が付与する created_at/updated_at も
@@ -49,7 +48,6 @@ func Open(ctx context.Context, cfg config.DB) (*gorm.DB, error) {
 	return gormDB, nil
 }
 
-// Close は GORM 接続が保持するコネクションプールを閉じる。
 func Close(gormDB *gorm.DB) error {
 	sqlDB, err := gormDB.DB()
 	if err != nil {

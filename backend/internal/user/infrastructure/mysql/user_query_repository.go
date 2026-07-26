@@ -11,12 +11,10 @@ import (
 	"gorm.io/gorm"
 )
 
-// UserQueryRepository は users テーブルからの読み取りを担う。
 type UserQueryRepository struct {
 	db *gorm.DB
 }
 
-// NewUserQueryRepository はユーザーの読み取りリポジトリを生成する。
 func NewUserQueryRepository(db *gorm.DB) repository.UserQueryRepository {
 	return &UserQueryRepository{db: db}
 }

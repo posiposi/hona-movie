@@ -3,8 +3,8 @@ package mysql
 
 import "time"
 
-// UserModel は users テーブルの行を表す。主キーが ULID で論理削除も持たないため
-// gorm.Model は使わず、必要なカラムだけを宣言する。
+// UserModel が gorm.Model を埋め込まないのは、主キーが ULID で論理削除も
+// 持たないため。
 type UserModel struct {
 	ID        string `gorm:"column:id;primaryKey;type:char(26)"`
 	Name      string `gorm:"column:name;type:varchar(255);not null"`

@@ -10,8 +10,8 @@ import (
 	"gorm.io/gorm"
 )
 
-// TestUserModelMatchesSchema は GORM モデルと実スキーマのカラム集合を双方向に突き合わせる。
-// マイグレーションでカラムを増減させたときにモデルの更新漏れを検出するのが狙い。
+// 突き合わせを双方向で行うのは、片方向だとマイグレーションで増えたカラムが
+// モデルに反映されていないケースを見逃すため。
 func TestUserModelMatchesSchema(t *testing.T) {
 	statement := &gorm.Statement{DB: testDB}
 	if err := statement.Parse(&usermysql.UserModel{}); err != nil {

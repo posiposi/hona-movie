@@ -9,7 +9,6 @@ type Error struct {
 	Message string
 }
 
-// NewError は指定されたコードとメッセージを持つドメインエラーを返す。
 func NewError(code, message string) *Error {
 	return &Error{
 		Code:    code,

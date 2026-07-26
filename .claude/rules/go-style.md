@@ -29,9 +29,10 @@ Google Go Style Guide (https://google.github.io/styleguide/go/) に準拠する�
 
 ## Comments
 
+- 振る舞いを説明するだけのコメントは**記述しない**
+ - *why* を説明し、*what* の繰り返しは避ける
 - エクスポートされたトップレベル名には必ず doc コメントを付ける
 - doc コメントはシンボル名で始め、完全な文で記述
-- *why* を説明し、*what* の繰り返しは避ける
 - unexported なコードへのコメントは必要最低限に留める
 
 ## Package Design

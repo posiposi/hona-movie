@@ -16,6 +16,23 @@ backend/    # Go Lambdalith。モジュラーモノリス + DDD + CQRS
 infra/      # Terraform
 ```
 
+`backend/` の内部構成はモジュール（境界づけられたコンテキスト）単位で切る。詳細は `.claude/rules/go-ddd-architecture.md` を参照。
+
+```
+backend/
+├── cmd/                  # エントリポイント（全モジュールの配線点）
+├── migrations/           # 物理DBが単一のためモジュールに含めず一元管理
+└── internal/
+    ├── kernel/           # 共有カーネル。ID基底型・ドメインエラー。業務ロジックは置かない
+    ├── config/           # 技術基盤。環境変数 → 設定
+    ├── db/               # 技術基盤。GORM 接続
+    └── {module}/         # user, movie, watched_movie, review, actor_ratio, auth, admin
+        ├── domain/{model,repository}
+        ├── application/
+        ├── infrastructure/mysql/
+        └── interfaces/
+```
+
 ## アーキテクチャ（確定済みの重要方針）
 
 - **単一ドメイン配信**: CloudFront 単一ドメインで SPA・画像・API を配信し CORS を回避。同一オリジンなので HttpOnly Cookie がそのまま届く。`default→S3(SPA)` / `/images/*→S3(画像)` / `/api/*→Lambda Function URL`。
@@ -62,6 +79,33 @@ docker compose run --rm api go run ./cmd/migrate down     # 1バージョンだ�
 - **日時カラムは `DATETIME`**（`TIMESTAMP` は上限が 2038-01-19）。TZ 変換されないため、**DB には常に UTC を入れる**運用規約とセットで守る。
 - 本番(VPC内RDS)への適用経路は別 Issue で設計する。Lambda ハンドラ内でのマイグレーション実行はしない（コールドスタート増加・同時実行時の競合・実行時間のリスク）。
 
+## ORM / データアクセス
+
+**GORM**(`gorm.io/gorm` + `gorm.io/driver/mysql`) を読み書きのみに使う。**`AutoMigrate` は使わない**（未使用カラムを削除せず、差分がレビューできず履歴も残らないため）。スキーマの正は `backend/migrations/` の SQL であり、GORM モデルはそれに追従する。
+
+- GORM のタグ付き構造体はインフラ層の関心事なので `infrastructure/mysql/{entity}_model.go` に置き、**ドメインエンティティとは別型**にする。DB行→ドメインエンティティの変換はリポジトリ実装内の private 関数で行う（独立した mapper 層は設けない）。
+- **`gorm.Model` は使わない**。主キーが ULID(`CHAR(26)`) で論理削除も持たないため、必要なカラムだけを手で宣言する。
+- GORM 既定の複数形化は当てにせず、モデルに `TableName()` を実装する（`UserModel` の既定は `user_models` になる）。
+- **DB 接続は `internal/db` の `Open` に集約する**。`SetMaxOpenConns(2)` 等のプール設定と `NowFunc` の UTC 固定をここで行うため、`gorm.Open` を各所で直接呼ばない。設定値は `internal/config` が環境変数から読む。
+- 見つからない場合は `gorm.ErrRecordNotFound` をそのまま返さず、`domain/repository` の sentinel エラー（`ErrUserNotFound` 等）にラップして返す。呼び出し側が `errors.Is` で判別できるようにするため。
+- ULID の生成は `github.com/oklog/ulid/v2`。`internal/kernel` の ID 値オブジェクトに隠蔽してある。**`ulid.Parse` ではなく `ulid.ParseStrict` を使う**（`ulid.Parse` は速度優先で文字検証を省き、不正な文字列を黙って別の値にデコードする）。
+
+## テスト
+
+ユニットテストと、実DBに対する統合テストの2種類。詳細な規約は `.claude/rules/go-testing.md` を参照。
+
+```bash
+docker compose run --rm api go test ./...                    # ユニットテスト
+docker compose run --rm api go test -tags=integration ./...   # 統合テスト（実DB）
+```
+
+- 統合テストは `//go:build integration` タグで区別する。ファイル名に `integration` は含めない。
+- **統合テストは専用スキーマ `honamovie_test` に対して実行する**。接続先は `docker-compose.yml` が `api` に渡す `TEST_DB_DSN`。開発用スキーマ(`honamovie`)を絶対に使わない（クリーンアップ漏れで開発データを壊さないため）。`TestMain` で接続先が `_test` サフィックスを持つことを検証してから走らせる。
+- テスト用スキーマは `docker/mysql/initdb.d/` の init スクリプトで作成する。**`db-data` volume が既に初期化済みの場合 init スクリプトは実行されない**ので、既存環境では手動で `CREATE DATABASE` と `GRANT` が必要。
+- マイグレーションの適用は `TestMain` で goose を呼んで自動化する。手動適用を前提にしない。
+- テストデータは固定プレフィックス付きで作り、`t.Cleanup` で必ず削除する。
+- **GORM モデルと DDL の乖離はスキーマ突合テストで検出する**（`Migrator().ColumnTypes()` とモデルのフィールド集合を**双方向**に突き合わせる）。片方向だけだと「DDLにあるがモデルにないカラム」を見逃す。CRUD の統合テストと併用する。
+
 ## インフラ / IaC
 
 Terraform で全リソース管理。コスト圧縮方針が明確なので逸脱しないこと:
@@ -77,7 +121,8 @@ Terraform で全リソース管理。コスト圧縮方針が明確なので逸�
 
 ## エージェント運用ルール
 
-- **PR作成完了後はすべてのサブエージェント・agent teamsを `TaskStop` で終了すること**。`SendMessage` での終了指示では停止しないため、必ず `TaskStop` を使用する。不要なエージェントを起動したまま残さない。
+- **全チームの作業が完了した時点で、すべてのサブエージェント・agent teams を `TaskStop` で終了すること**。PR作成まで待たない。`SendMessage` での終了指示では停止しないため、必ず `TaskStop` を使用する。不要なエージェントを起動したまま残さない。
+- 並行実行しているチームがある場合は、**全チームの完了を確認してから**まとめて終了する。先に終わったチームだけを個別に止めない（他チームからの問い合わせに応答できなくなるため）。
 
 ## 遵守事項
 

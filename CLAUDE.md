@@ -35,12 +35,14 @@ infra/      # Terraform
 
 ## 開発環境・コマンド
 
-**すべての開発コマンド(build/test/lint/migrate)はコンテナ内で実行する。ホストに Go/MySQL/Node を直接入れない。** `docker compose` で `api`(Go)/`db`(mysql:8)/`web`(Node) を定義。コマンドは `docker compose run --rm api ...` の形に統一。
+**すべての開発コマンド(build/test/lint/migrate)はコンテナ内で実行する。ホストに Go/MySQL/Node を直接入れない。** `docker compose` で `api`(Go)/`db`(mysql:8.4.x LTS) を定義（フロントエンドの `web`(Node) は別 Issue で追加予定）。コマンドは `docker compose run --rm api ...` の形に統一。
 
 - **Go は最新 stable**。`go.mod` の `go` ディレクティブと Docker イメージタグを一致させる。
+- **MySQL は LTS 系（8.4.x）を使う**。9.x は Innovation トラック（サポート期間が短い）なので採用しない。イメージタグはパッチまで固定する（浮動タグ `mysql:8.4` は最新パッチに追随しないため）。
 - **alpine イメージは使わない**。build は `golang:<latest-stable>`、runtime は `provided.al2023` もしくは Debian系 distroless。web は `node:<lts>`。
 - **Lambda 成果物**: 開発コンテナ内で `GOOS=linux GOARCH=arm64` でビルド（`provided.al2023` 想定）。
-- ローカル動作確認は `docker compose up`(db/api/web) → スキーマ適用 → 検索(TMDBプロキシ)→視聴登録→比率→感想→一覧の導線を通す。
+- ローカル動作確認は `docker compose up`(db/api) → スキーマ適用 → 検索(TMDBプロキシ)→視聴登録→比率→感想→一覧の導線を通す。
+- **コンテナは常時起動させておく。作業後に `docker compose down` / `stop` で停止しないこと。** 起動済みのコンテナに対して `docker compose run --rm api ...` / `docker compose exec api ...` でコマンドを実行する。
 
 ## インフラ / IaC
 
@@ -50,6 +52,14 @@ Terraform で全リソース管理。コスト圧縮方針が明確なので逸�
 - **NAT はマネージド NAT Gateway を使わない**: fck-nat(t4g.nano, ~$3/月)の NAT インスタンス。単一AZ・冗長なし。用途は TMDB への outbound のみ。
 - **RDS Proxy は不要**: 単一ユーザーで同時実行ほぼ1。Lambda `reserved_concurrency` を小さく(例5)、`SetMaxOpenConns(2)`・短い `ConnMaxIdleTime` で対応。
 - S3 アクセスは Gateway VPC Endpoint 経由（NAT を通さない）。シークレット(TMDB_TOKEN/DB_DSN/AUTH_TOKEN)は SSM Parameter Store SecureString。
+
+## コーディング方針
+
+- **コメントに頼らず、コード自体から振る舞いを読み取れるように記述する**。自明な処理を説明するだけのコメントは書かない。コメントを残すのは *why*（設計判断の理由）や TODO など、コードからは読み取れない情報に限る。
+
+## エージェント運用ルール
+
+- **PR作成完了後はすべてのサブエージェント・agent teamsを `TaskStop` で終了すること**。`SendMessage` での終了指示では停止しないため、必ず `TaskStop` を使用する。不要なエージェントを起動したまま残さない。
 
 ## 遵守事項
 

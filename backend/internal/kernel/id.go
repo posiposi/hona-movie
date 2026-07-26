@@ -17,8 +17,7 @@ var (
 	monotonicRand = ulid.Monotonic(rand.Reader, 0)
 )
 
-// ID は全集約が共有する識別子の値オブジェクト。生成時刻順にソートできるよう
-// ULID を採用している。
+// ID に ULID を採用しているのは、生成時刻順にソートできるようにするため。
 type ID struct {
 	value string
 }

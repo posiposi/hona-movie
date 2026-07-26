@@ -91,8 +91,8 @@ func newTestUserName(t *testing.T, suffix string) model.UserName {
 	return name
 }
 
-// insertTestUser はリポジトリ実装を介さずに行を投入し、Query 側のテストが
-// Command 側の実装に依存しないようにする。
+// リポジトリ実装を介さず直接 INSERT するのは、Query 側のテストを Command 側の
+// 実装から独立させるため。
 func insertTestUser(t *testing.T, id model.UserID, name model.UserName, at time.Time) {
 	t.Helper()
 	err := testDB.Exec(

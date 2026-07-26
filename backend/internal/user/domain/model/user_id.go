@@ -2,8 +2,8 @@ package model
 
 import "github.com/posiposi/hona-movie/backend/internal/kernel"
 
-// UserID はユーザーの識別子。kernel.ID を埋め込むことで、他集約の ID との
-// 取り違えを型で防ぐ。
+// UserID が kernel.ID をそのまま使わず埋め込むのは、他集約の ID との取り違えを
+// 型で防ぐため。
 type UserID struct {
 	kernel.ID
 }

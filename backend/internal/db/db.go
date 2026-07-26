@@ -1,4 +1,3 @@
-// Package db は GORM による MySQL 接続を生成する。
 package db
 
 import (

@@ -9,8 +9,8 @@ import (
 
 const ErrCodeInvalidUserName = "INVALID_USER_NAME"
 
-// userNameMaxLength は users.name が VARCHAR(255) であることに合わせた上限。
-// バイト数ではなく文字数で数えるため、マルチバイト文字も 255 文字まで許容する。
+// users.name が VARCHAR(255) であることに合わせる。MySQL は utf8mb4 でも文字数で
+// 数えるため、Go 側もバイト数ではなくルーン数で数える。
 const userNameMaxLength = 255
 
 type UserName struct {

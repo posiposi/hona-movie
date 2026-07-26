@@ -2,7 +2,6 @@ package model
 
 import "time"
 
-// User はユーザー集約のルートエンティティ。
 type User struct {
 	id        UserID
 	name      UserName
@@ -19,7 +18,8 @@ func CreateUser(name UserName) User {
 	}
 }
 
-// ReconstructUser は DB からの復元専用で、ID の採番もバリデーションも行わない。
+// ReconstructUser がバリデーションを行わないのは、永続化済みの値は書き込み時に
+// 検証を通っているため。
 func ReconstructUser(id UserID, name UserName, createdAt, updatedAt time.Time) User {
 	return User{
 		id:        id,
@@ -45,7 +45,6 @@ func (u User) UpdatedAt() time.Time {
 	return u.updatedAt
 }
 
-// Rename はレシーバを変更せず、名前を差し替えた新しい User を返す。
 func (u User) Rename(name UserName) User {
 	u.name = name
 	return u

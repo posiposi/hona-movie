@@ -1,4 +1,3 @@
-// Package mysql は user モジュールのリポジトリを GORM + MySQL で実装する。
 package mysql
 
 import "time"
@@ -12,7 +11,7 @@ type UserModel struct {
 	UpdatedAt time.Time
 }
 
-// TableName は GORM 既定の複数形化（user_models）を避けて users を対象にする。
+// GORM 既定の複数形化では user_models になってしまうため、テーブル名を明示する。
 func (UserModel) TableName() string {
 	return "users"
 }
